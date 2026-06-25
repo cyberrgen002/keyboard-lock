@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>POC</title>
+    <style>
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0c0d10; overflow: hidden; color: #fff; }
+
+   
+        #containerUtama {
+            width: 100vw;
+            height: 100vh;
+            background-color: #14161d;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .btn-utama {
+            padding: 16px 32px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            background: linear-gradient(135deg, #28a745, #218838);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+            transition: transform 0.2s, opacity 0.2s;
+        }
+        .btn-utama:active { transform: scale(0.98); }
+
+        #info-status { margin-top: 20px; font-size: 14px; color: #7e8494; text-align: center; line-height: 1.6; }
+
+        
+        #modal-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(4px);
+            z-index: 2147483646;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+        #modal-overlay.aktif { opacity: 1; pointer-events: auto; }
+
+        .modal-box {
+            background: #1f222b;
+            border: 1px solid #2f3443;
+            padding: 28px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+            transform: scale(0.9);
+            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        #modal-overlay.aktif .modal-box { transform: scale(1); }
+
+        .modal-box h3 { font-size: 20px; margin-bottom: 12px; color: #ffc107; }
+        .modal-box p { font-size: 14px; color: #a9b2c3; margin-bottom: 24px; line-height: 1.5; }
+
+        .modal-buttons { display: flex; gap: 12px; justify-content: center; }
+        .btn-modal { padding: 12px 20px; font-size: 14px; font-weight: 600; border-radius: 6px; cursor: pointer; border: none; flex: 1; }
+        .btn-batal { background: #2f3443; color: #fff; }
+        .btn-keluar { background: #dc3545; color: #fff; }
+
+      
+        #gambar-fullscreen-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #000;
+            z-index: 2147483647;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        #gambar-fullscreen-overlay.aktif { opacity: 1; pointer-events: auto; }
+
+        #gambar-fullscreen-overlay img { 
+            width: 100vw; 
+            height: 100vh; 
+            object-fit: fill; 
+        }
+        
+        .btn-tutup-gambar {
+            position: absolute;
+            top: 20px; right: 20px;
+            padding: 10px 18px;
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(5px);
+            color: #fff; border: none; border-radius: 20px;
+            font-weight: bold; cursor: pointer; font-size: 14px;
+            transition: background 0.2s;
+            z-index: 2147483648; 
+        }
+        .btn-tutup-gambar:hover { background: rgba(255, 255, 255, 0.4); }
+    </style>
+</head>
+<body>
+
+    <div id="containerUtama">
+        <button class="btn-utama" onclick="masukKeModeAman()">Go to Fullscreen</button>
+        <div id="info-status">POC Ready</div>
+
+       
+        <div id="modal-overlay">
+            <div class="modal-box">
+                <h3>Peringatan Sistem</h3>
+                <p>Apakah Anda yakin ingin keluar dari mode aman ini? Progres Anda mungkin tidak tersimpan.</p>
+                <div class="modal-buttons">
+                    <button class="btn-modal btn-batal" onclick="tutupModal()">Batal</button>
+                    <button class="btn-modal btn-keluar" onclick="konfirmasiKeluarFullscreen()">Ya, Keluar</button>
+                </div>
+            </div>
+        </div>
+
+     
+        <div id="gambar-fullscreen-overlay">
+         
+            <img src="imagee.png" alt="Gambar Fullscreen">
+        </div>
+    </div>
+
+    <script>
+        const containerUtama = document.getElementById('containerUtama');
+        const infoStatus = document.getElementById('info-status');
+        const modalOverlay = document.getElementById('modal-overlay');
+        const gambarOverlay = document.getElementById('gambar-fullscreen-overlay');
+
+        function masukKeModeAman() {
+            if (containerUtama.requestFullscreen) {
+                containerUtama.requestFullscreen();
+            } else if (containerUtama.webkitRequestFullscreen) {
+                containerUtama.webkitRequestFullscreen();
+            }
+        }
+
+        async function kunciTombolEsc() {
+            const sistemMendukungLock = ('keyboard' in navigator) && ('lock' in navigator.keyboard);
+            
+            if (sistemMendukungLock) {
+                try {
+                    await navigator.keyboard.lock(['Escape']);
+                    infoStatus.innerHTML = "<span style='color: #28a745;'>POC</span><br>Button Esc successfully locked. Press Esc to display the POC";
+                } catch (error) {
+                    console.error( error);
+                }
+            } else {
+                infoStatus.innerHTML = "<span style='color: #ffc107;'>Fitur Tidak Didukung!</span><br>Browser not supported.";
+            }
+        }
+
+      
+        function lepasKunciKeyboard() {
+            if (('keyboard' in navigator) && ('unlock' in navigator.keyboard)) {
+                navigator.keyboard.unlock();
+                
+            }
+        }
+
+       
+        function pantauPerubahanFullscreen() {
+            if (document.fullscreenElement || document.webkitFullscreenElement) {
+                kunciTombolEsc();
+            } else {
+                lepasKunciKeyboard();
+                tutupModal();
+                tutupGambarPenuh();
+            }
+        }
+        document.addEventListener('fullscreenchange', pantauPerubahanFullscreen);
+        document.addEventListener('webkitfullscreenchange', pantauPerubahanFullscreen);
+
+        window.addEventListener('keydown', function (e) {
+            const sedangFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
+            
+            if (sedangFullscreen && (e.key === 'Escape' || e.keyCode === 27)) {
+                e.preventDefault(); 
+                bukaGambarPenuh();
+            }
+        });
+
+        function bukaGambarPenuh() {
+            gambarOverlay.classList.add('aktif');
+        }
+
+        function tutupGambarPenuh() {
+            gambarOverlay.classList.remove('aktif');
+        }
+
+        function bukaModal() {
+            modalOverlay.classList.add('aktif');
+        }
+
+        function tutupModal() {
+            modalOverlay.classList.remove('aktif');
+        }
+
+        function konfirmasiKeluarFullscreen() {
+            tutupModal();
+            tutupGambarPenuh();
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            }
+        }
+    </script>
+
+</body>
+</html>
